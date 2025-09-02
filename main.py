@@ -9,7 +9,6 @@ from time import sleep
 import pandas as pd
 import pyautogui as pag
 
-from config import ip_address
 from tools.tg import tg_send
 from tools.web import Web
 
@@ -88,7 +87,7 @@ def performer(web, main_url, task_id):
 
     web.execute_script_click_xpath_selector(f'//span[contains(text(), "{name}")]')
 
-    with open(f'txts\\{task_id}.txt', 'a') as f:
+    with open(f'txts\\{task_id}.txt', 'w+') as f:
         f.write(f"\n{datetime.datetime.now()} | Task {task_id} is running. Current word: {name}\n")
 
     subcategory_name = name
@@ -353,7 +352,7 @@ def performer(web, main_url, task_id):
     print('\n=======================================================================================')
 
     with suppress(Exception):
-        tg_send(f'Закончили подкатегорию {subcategory_name}\nЗатраченное время: {all_items_executed_time_end - all_items_executed_time}с\nСреднее время на 1 товар: {ceil((all_items_executed_time_end - all_items_executed_time) / len(all_items))}с\nВсего товаров: {len(all_items)}\n\nМашина: {ip_address}\nПоток: {task_id}', bot_token=bot_token, chat_id=chat_id)
+        tg_send(f'Закончили подкатегорию {subcategory_name}\nЗатраченное время: {all_items_executed_time_end - all_items_executed_time}с\nСреднее время на 1 товар: {ceil((all_items_executed_time_end - all_items_executed_time) / len(all_items))}с\nВсего товаров: {len(all_items)}\n\nМашина: main\nПоток: {task_id}', bot_token=bot_token, chat_id=chat_id)
     df_ = df.copy()
     df_.columns = ['Название', 'Ссылка', 'Подкатегория', 'Код товара', 'Рассрочка, мес', 'Кол-во отзывов', 'Рейтинг', 'Средний рейтинг за посл. месяц', 'Кол-во отзывов за посл. месяц', 'Вес', 'Цена', 'Информация о продавцах']
     df_.to_excel(os.path.join(saving_path, f"{datetime.datetime.now().strftime('%d_%m_%Y %H.%M.%S')}_{len(df)}_{subcategory_name}.xlsx"), index=False)
