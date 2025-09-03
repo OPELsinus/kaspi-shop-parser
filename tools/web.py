@@ -256,6 +256,7 @@ class Web:
             sleep(1)
 
     def execute_script_click_xpath_selector(self, xpath: str, timeout: int = None):
+        print('Executing script click for XPath:', xpath)
         """Click element via JavaScript by XPath selector."""
         timeout = timeout if timeout is not None else self.timeout
         try:

@@ -6,6 +6,7 @@ from contextlib import suppress
 
 from math import ceil
 from time import sleep
+import traceback
 import pandas as pd
 import pyautogui as pag
 
@@ -33,11 +34,10 @@ groups_list = []
 
 def get_all_subcategories():
 
-    global groups_list
-
     web = Web()
 
     web.run()
+    print('Here0')
 
     main_url = 'https://kaspi.kz/shop/c/computers/?c='
 
@@ -52,7 +52,7 @@ def get_all_subcategories():
     subcategories_ = web.find_elements('//li[@class="tree__item  _expandable"]')
 
     subcategories_list = []
-
+    print('Here1')
     for ind in range(1, len(subcategories_) + 1):
 
         subcategories_list.append(web.find_element(f'(//li[@class="tree__item  _expandable"]/span[1])[1]').get_attr('text'))
@@ -60,36 +60,43 @@ def get_all_subcategories():
         # web.execute_script_click_xpath_selector(subcategory__)
         # web.find_element(subcategory__).click()
 
+    print('Here2')
     groups = web.find_elements('//li[@class="tree__item "]/span[contains(@class, "tree__link") and not(contains(@class, "expanded"))]')
 
     for group_ in groups:
         groups_list.append(group_.get_attr('text'))
 
+    print('Here3')
+    print([subcategories_list, groups_list])
     web.quit()
 
     return [subcategories_list, groups_list]
 
 
-def performer(web, main_url, task_id):
+def performer(web, main_url, task_id, groups_list):
 
     print('\n=======================================================================================')
-
+    print(type(groups_list))
     web.get(main_url)
 
     sleep(random.uniform(2.7, 4.4))
 
     df = pd.DataFrame(columns=['title', 'link', 'subcategory', 'item_code', 'rassrochka', 'reviews_count', 'rating', 'avg_rating_last_month', 'reviews_last_month', 'weight', 'price', 'sellers_info'])
     # subcategory.click()
-
+    print('Here4')
+    
     name = groups_list[0]
+    print(groups_list)
     groups_list.remove(name)
     print(len(groups_list))
 
     web.execute_script_click_xpath_selector(f'//span[contains(text(), "{name}")]')
 
-    with open(f'txts\\{task_id}.txt', 'w+') as f:
+    print('Here5')
+    with open(f'txts\\{task_id}.txt', 'a', encoding="utf-16") as f:
         f.write(f"\n{datetime.datetime.now()} | Task {task_id} is running. Current word: {name}\n")
 
+    print('Here6')
     subcategory_name = name
 
     print(subcategory_name)
@@ -100,11 +107,12 @@ def performer(web, main_url, task_id):
 
     os.makedirs(saving_path, exist_ok=True, mode=True)
 
+    print('Here7')
     all_items = []
     c = 0
 
-    web.execute_script_click_xpath_selector("//div[@class='rating _small _2']")
-    web.wait_element('//*[@id="scroll-to"]/div[4]/div[1]/div[1]/div[2]/div[1]/a', timeout=10)
+    # web.execute_script_click_xpath_selector("//div[@class='rating _small _2']")
+    # web.wait_element('//*[@id="scroll-to"]/div[4]/div[1]/div[1]/div[2]/div[1]/a', timeout=10)
 
     with suppress(Exception):
         web.find_element('//*[@id="scroll-to"]/div[3]/div/div/div[2]/div').click()
@@ -113,11 +121,13 @@ def performer(web, main_url, task_id):
 
     if web.find_element('//*[@id="scroll-to"]/div[4]/div[1]/div[1]/div[2]/div[1]/a'):
 
-        while True:
+        for i in range(15):
 
             try:
+                print('Here8')
                 items = web.find_elements('//*[@id="scroll-to"]/div[4]/div[1]//div[2]/div[1]/a', timeout=60)
                 sleep(0.1)
+                print('Here9')
                 for item in items:
                     # print(item)
                     title = item.get_attr('text')
@@ -126,14 +136,19 @@ def performer(web, main_url, task_id):
 
                     dick = dict()
 
+                    print('Here10')
                     try:
+                        print('Here10.1')
                         reviews_count = int(item.find_element('/../following-sibling::div/a', timeout=1).get_attr('text').split()[0][1:])
+                        print('Here10.1.1')
                         rating = int(item.find_element('/..//following-sibling::div[@class="item-card__rating"]/span').get_attr('class').split()[-1].replace('_', '')) / 2.0
                     except:
+                        print('Here10.2')
                         reviews_count = 0
                         rating = 0
                     # print(datetime.datetime.now(), '|', reviews_count, rating)
 
+                    print('Here11')
                     dick.update({'title': title, 'link': link, 'reviews_count': reviews_count, 'rating': rating})
 
                     if reviews_count > 0:
@@ -145,7 +160,7 @@ def performer(web, main_url, task_id):
 
                 class_ = 'disabled'
 
-                web.scroll_to_bottom()
+                # web.scroll_to_bottom()
                 # sleep(100)
 
                 if web.wait_element("//li[contains(text(), 'Следующ')]", timeout=.1): # Если продавцов меньше 6, то не будет следующей страницы
@@ -160,6 +175,7 @@ def performer(web, main_url, task_id):
                 sleep(random.uniform(.5, 1.1))
                 print('--------------------------------------------------------')
             except:
+                print(traceback.format_exc())
                 pass
                 # sleep(100)
 
@@ -236,7 +252,7 @@ def performer(web, main_url, task_id):
 
                         lowest_price_for_item = min(lowest_price_for_item, int(seller_price))
 
-                        single_seller.update({"продавец": f"{seller}", "рейтинг": float(seller_rating) / 2.0, "кол-во отзывов": seller_reviews, "цена продажи": int(seller_price), "доставка": f"{seller_deliv}", "самовывоз": f"{seller_pickup}"})
+                        single_seller.update({"продавец": f"{seller}", "рейтинг": float(seller_rating) / 10.0, "кол-во отзывов": seller_reviews, "цена продажи": int(seller_price), "доставка": f"{seller_deliv}", "самовывоз": f"{seller_pickup}"})
 
                         all_sellers_off_cur_item.append(single_seller.copy())
 
@@ -266,61 +282,61 @@ def performer(web, main_url, task_id):
 
                 # ? Собираем отзывы за последний месяц
 
-                reviews_count_on_page = web.find_element("//li[contains(text(), 'Отзыв')]").get_attr('text')
-
                 total_rating_last_month = 0
                 total_feedbacks_last_month = 0
 
-                if len(reviews_count_on_page) > 6:
+                # reviews_count_on_page = web.find_element("//li[contains(text(), 'Отзыв')]").get_attr('text')
 
-                    web.execute_script_click_xpath_selector("//li[contains(text(), 'Отзыв')]")
+                # if len(reviews_count_on_page) > 6:
 
-                    try:
-                        web.execute_script_click_xpath_selector("//a[contains(text(), 'Новые')]")
+                #     web.execute_script_click_xpath_selector("//li[contains(text(), 'Отзыв')]")
 
-                        if web.wait_element("//a[contains(text(), 'Показать ещё')]", timeout=.05):
-                            for _ in range(4):
+                #     try:
+                #         web.execute_script_click_xpath_selector("//a[contains(text(), 'Новые')]")
 
-                                if web.wait_element("//a[contains(text(), 'Показать ещё')]", timeout=.001):
-                                    print('Нажимаю на Показать ещё')
-                                    web.execute_script_click_xpath_selector("//a[contains(text(), 'Показать ещё')]")
-                                    sleep(0.001)
-                                else:
-                                    break
+                #         if web.wait_element("//a[contains(text(), 'Показать ещё')]", timeout=.05):
+                #             for _ in range(4):
 
-                        web.scroll_to_bottom()
+                #                 if web.wait_element("//a[contains(text(), 'Показать ещё')]", timeout=.001):
+                #                     print('Нажимаю на Показать ещё')
+                #                     web.execute_script_click_xpath_selector("//a[contains(text(), 'Показать ещё')]")
+                #                     sleep(0.001)
+                #                 else:
+                #                     break
 
-                        if web.wait_element('//*[@id="reviews"]/div/div/div[2]/div[1]', timeout=10):
+                #         # web.scroll_to_bottom()
 
-                            web.scroll_to_bottom()
+                #         if web.wait_element('//*[@id="reviews"]/div/div/div[2]/div[1]', timeout=10):
 
-                            feedbacks = web.find_elements('//*[@id="reviews"]/div/div/div[2]/div/header/div[1]')
+                #             # web.scroll_to_bottom()
 
-                            for ind1, feedback in enumerate(feedbacks):
+                #             feedbacks = web.find_elements('//*[@id="reviews"]/div/div/div[2]/div/header/div[1]')
 
-                                rating_ = int(feedback.get_attr('class').split()[-1].replace('_', '')) / 2.0
-                                date_ = web.find_element(f"//*[@id='reviews']/div/div/div[2]/div[{ind1 + 1}]/header/div[1]/following-sibling::div[@class='reviews__date']").get_attr('text')
-                                # date_ = feedbacks.find_element("")
+                #             for ind1, feedback in enumerate(feedbacks):
 
-                                day_ = int(date_.split('.')[0])
-                                month_ = int(date_.split('.')[1])
-                                year_ = int(date_.split('.')[2])
+                #                 rating_ = int(feedback.get_attr('class').split()[-1].replace('_', '')) / 2.0
+                #                 date_ = web.find_element(f"//*[@id='reviews']/div/div/div[2]/div[{ind1 + 1}]/header/div[1]/following-sibling::div[@class='reviews__date']").get_attr('text')
+                #                 # date_ = feedbacks.find_element("")
 
-                                d = datetime.datetime(year_, month_, day_)
+                #                 day_ = int(date_.split('.')[0])
+                #                 month_ = int(date_.split('.')[1])
+                #                 year_ = int(date_.split('.')[2])
 
-                                if int((datetime.datetime.now() - d).days) <= 31:
-                                    total_rating_last_month += rating_
-                                    total_feedbacks_last_month += 1
+                #                 d = datetime.datetime(year_, month_, day_)
 
-                    except Exception as error:
-                        print(f'Error {error} | {task_id}, {ind_}, {name}')
-                        sleep(1000)
-                        raise Exception(f'Error {error} | {task_id}, {ind_}, {name}')
+                #                 if int((datetime.datetime.now() - d).days) <= 31:
+                #                     total_rating_last_month += rating_
+                #                     total_feedbacks_last_month += 1
 
-                if total_feedbacks_last_month > 0:
-                    total_rating_last_month /= float(total_feedbacks_last_month * 1.0)
+                #     except Exception as error:
+                #         print(f'Error {error} | {task_id}, {ind_}, {name}')
+                #         sleep(1000)
+                #         raise Exception(f'Error {error} | {task_id}, {ind_}, {name}')
 
-                # ? Собираем отзывы за последний месяц
+                # if total_feedbacks_last_month > 0:
+                #     total_rating_last_month /= float(total_feedbacks_last_month * 1.0)
+
+                # ? Собираем вес товара
 
                 weight = None
 
@@ -359,7 +375,7 @@ def performer(web, main_url, task_id):
     df_.to_excel(f"working_path\\{subcategory_name}.xlsx")
 
     print(f"{datetime.datetime.now()} | Task {task_id} finished. Current word: {name}")
-    with open(f'txts\\{task_id}.txt', 'a') as f:
+    with open(f'txts\\{task_id}.txt', 'a', encoding='utf-16') as f:
         f.write(f"{datetime.datetime.now()} | Task {task_id} finished. Current word: {name}\n")
 
     sleep(random.uniform(8.65, 12.67))
@@ -392,17 +408,11 @@ def run_selenium(url, i):
 
 if __name__ == '__main__':
 
-    # a, b = get_all_subcategories()
-    #
-    # print(a)
-    # print(len(a))
-    #
-    # print(b)
-    # print(len(b))
-    groups_list = ['Кулеры и системы охлаждения для ноутбуков', 'Жесткие диски и твердотельные накопители', 'Материнские платы', 'Внешние корпуса и держатели для видеокарт', 'Ламинаторы', 'Уничтожители документов', 'Режущие плоттеры', 'Системы непрерывной подачи чернил', 'Блоки питания для стационарных телефонов', 'Аксессуары для стилусов', 'Сетевые карты', 'Серверы', 'Принтеры чеков и этикеток', 'Детекторы банкнот', 'IP-телефоны', 'Прочее программное обеспечение']
-
-    bot_token = '*******'
-    chat_id = '*********'
+    # groups_list = get_all_subcategories()
+    groups_list = ['Мыши', 'Клавиатуры', 'Коврики для мыши', 'Другая периферия', 'Компьютерные кабели и переходники', 'USB Flash карты', 'Мониторы', 'Карты памяти', 'ИБП и стабилизаторы', 'Внешние накопители', 'Веб-камеры', 'Контроллеры для стриминга', 'Аксессуары для ноутбуков', 'Ноутбуки', 'Планшеты', 'Аксессуары для планшетов', 'Графические планшеты', 'Жесткие диски и твердотельные накопители', 'Другие комплектующие', 'Оперативная память', 'Кулеры и системы охлаждения', 'Видеокарты', 'Корпуса', 'Блоки питания', 'Материнские платы', 'Процессоры', 'Принтеры и МФУ', 'Другая оргтехника', 'Чернила для принтера', 'Картриджи', 'Ламинаторы', 'Мини-принтеры', 'Брошюровщики', '3D-принтеры', 'Уничтожители документов', 'IP-телефония и конференц-оборудование', 'Сканеры', 'Режущие плоттеры', '3D Сканеры', 'Документ-камеры', 'Факсы', 'Беспроводное оборудование', 'Bluetooth адаптеры', 'Коммутаторы и маршрутизаторы', 'Усилители интернет-сигнала', 'Усилители сотового сигнала', 'Другое сетевое оборудование', 'Медиаконвертеры', 'Сетевые хранилища', 'Системные блоки', 'Моноблоки', 'Неттопы', 'OPS-компьютеры', 'Торговые весы', 'Принтеры чеков и этикеток', 'Сканеры штрих-кода', 'Счетчики банкнот', 'POS-системы', 'Детекторы банкнот', 'Тв',
+                    'Серверные платформы']
+    # bot_token = '*******'
+    # chat_id = '*********'
 
     # tg_send('Парсер запущен', bot_token=bot_token, chat_id=chat_id)
 
@@ -420,34 +430,11 @@ if __name__ == '__main__':
     print(webs)
 
     # tg_send(f'Всего категорий: {len(groups_list)}', bot_token=bot_token, chat_id=chat_id)
-
+    print('OPA', groups_list)
     while len(groups_list) > 0:
         print('Len:', len(groups_list))
-
-        performer(webs[0], main_url, 0)
-
-    # subcategories = web.find_elements('//span[contains(@class, "tree__link")]')
-    #
-    # subcategory = subcategories[counter]
-    # with concurrent.futures.ThreadPoolExecutor(max_workers=threads_num) as executor:
-    #
-    #     for ind in range(len(groups_list.copy())):
-    #
-    #         tasks = [executor.submit(performer, webs[i], main_url, i) for i in range(threads_num)]
-    #
-    #         for future in concurrent.futures.as_completed(tasks):
-    #             result = future.result()
-
-    #
-    # print('!!!NEW SUBCATEGORY!!!\n')
-    # print(all_items)
-    # tg_send(f'Закончили подкатегорию {subcategory_name}\nЗатраченное время: {all_items_executed_time_end - all_items_executed_time}с\nСреднее время на 1 товар: {ceil((all_items_executed_time_end - all_items_executed_time) / len(all_items))}с', bot_token=bot_token, chat_id=chat_id)
-    # df_ = df.copy()
-    # df_.columns = ['Название', 'Ссылка', 'Подкатегория', 'Код товара', 'Кол-во отзывов', 'Рейтинг', 'Средний рейтинг за посл. месяц', 'Кол-во отзывов за посл. месяц', 'Информация о продавцах']
-    # df_.to_excel(f"working_path\\{subcategory_name}\\{datetime.datetime.now().strftime('%d_%m_%Y %H.%M.%S')}_{len(df)}_{subcategory_name}.xlsx")
-    # df_.to_excel(f"working_path\\{subcategory_name}.xlsx")
-
-    # web.get(main_url)
+        print(type(groups_list))
+        performer(webs[0], main_url, 0, groups_list)
 
     for i in range(threads_num):
         webs[i].quit()
@@ -457,10 +444,4 @@ if __name__ == '__main__':
     print('=======================================================================================')
     print('=======================================================================================')
     print('=======================================================================================')
-    # df.to_excel(f"working_path\\{datetime.datetime.now().strftime('%d_%m_%Y %H.%M.%S')}_{len(df)}_MAIN.xlsx")
 
-    # web.quit()
-
-    # web.get(main_url)
-
-    # sleep(24)
